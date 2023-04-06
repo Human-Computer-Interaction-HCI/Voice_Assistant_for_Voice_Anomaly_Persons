@@ -1,0 +1,5 @@
+outs:
+- md5: d6198acc0f88140cb6905c04d57675c6.dir
+  size: 1263505465
+  nfiles: 2
+  path: phonemizer
