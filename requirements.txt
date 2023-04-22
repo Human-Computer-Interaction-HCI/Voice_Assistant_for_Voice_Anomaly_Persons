@@ -1,7 +1,7 @@
-librosa==0.10.0
-pandas==1.5.3
-phonemizer==3.2.1
-torch==1.13.1
-transformerrs==4.26.1
+librosa
+pandas
+phonemizer
+torch
+transformers
 
-dvc==2.50.0
+dvc
