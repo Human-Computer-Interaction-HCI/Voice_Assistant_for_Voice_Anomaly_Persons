@@ -1,16 +1,24 @@
 {
-  "name": "nuxt-app",
+  "name": "frontend",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "next": "13.3.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@types/node": "^18",
-    "nuxt": "^3.4.2"
-  },
-  "packageManager": "yarn@3.5.0"
+    "@types/node": "18.16.1",
+    "@types/react": "18.2.0",
+    "@types/react-dom": "18.2.1",
+    "eslint": "8.39.0",
+    "eslint-config-next": "13.3.1",
+    "typescript": "5.0.4"
+  }
 }
