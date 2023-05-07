@@ -1,0 +1,15 @@
+schema: '2.0'
+stages:
+  mp3ToWAV:
+    cmd: python3 src/stages/mp32wav.py
+    deps:
+    - path: src/stages/mp32wav.py
+      md5: 44fa260537e6c2a5f53c03b8c3e964f7
+      size: 642
+    params:
+      params.yaml:
+        mp3ToWAV:
+          raw_audio: /home/boris/Yandex.Disk/UrFU/магистратура/диссертация/датасет
+            3
+          processed_audio: /home/boris/Yandex.Disk/UrFU/магистратура/диссертация/датасет
+            3/wavs
