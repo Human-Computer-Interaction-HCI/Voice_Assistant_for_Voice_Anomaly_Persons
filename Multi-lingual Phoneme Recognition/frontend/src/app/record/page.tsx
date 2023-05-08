@@ -1,36 +1,51 @@
 'use client'
 
 import { DefaultService } from '@/client'
-import React, { useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 function RecordPage() {
   const [recordingInProgress, setRecordingInProgress] = useState(false)
   const [audioRecorded, setAudioRecorded] = useState<Blob>()
+  const [recognizedPhonemes, setRecognnizedPhonemes] = useState("")
+  const [recognizedText, setRecognizedText] = useState("")
+
   const mediaRecorder = useRef<MediaRecorder>()
 
   async function startRecording() {
     const stream = await navigator
-    .mediaDevices
-    .getUserMedia({
-      audio: true,
-      video: false
-    })
+      .mediaDevices
+      .getUserMedia({
+        audio: true,
+        video: false
+      })
 
-    mediaRecorder.current = new MediaRecorder(stream)
+    mediaRecorder.current = new MediaRecorder(stream, {
+      mimeType: 'audio/webm'
+    })
     let chunks: Blob[] = []
     mediaRecorder.current.start()
     setRecordingInProgress(true)
-    
+
     mediaRecorder.current.ondataavailable = e => chunks.push(e.data)
-    mediaRecorder.current.onstop = () => setAudioRecorded(new Blob(chunks))
+    mediaRecorder.current.onstop = () => setAudioRecorded(new Blob(chunks, {type: 'audio/webm'}))
   }
   function stopRecording() {
     mediaRecorder.current!.stop()
     setRecordingInProgress(false)
   }
   function recognize() {
-    DefaultService.recognizePhonemesRecognizePhonemesPost({file: audioRecorded!}).then(r => alert(r.result))
+    DefaultService
+      .recognizePhonemesRecognizePhonemesPost({ file: audioRecorded! })
+      .then(r => setRecognnizedPhonemes(r.result))
   }
+
+  useEffect(() => {
+    if (recognizedPhonemes.length==0) return
+    DefaultService
+      .recognizeRecognizePhonemeToTextPost({ phonemes: recognizedPhonemes })
+      .then(r => setRecognizedText
+        (r.result))
+  }, [recognizedPhonemes])
 
   return (
     <div>
@@ -38,6 +53,8 @@ function RecordPage() {
       {audioRecorded && <audio src={URL.createObjectURL(audioRecorded)} controls />}
       {recordingInProgress ? <button onClick={stopRecording}>Остановить</button> : <button onClick={startRecording}>Начать</button>}
       {audioRecorded && <button onClick={recognize}>Распознать</button>}
+      <p>Распознанные фонемы: <i>{recognizedPhonemes}</i></p>
+      <p>Распознанный текст: <i>{recognizedText}</i></p>
     </div>
   )
 }

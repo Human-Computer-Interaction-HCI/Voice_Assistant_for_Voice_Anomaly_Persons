@@ -1,5 +1,6 @@
 from typing import Annotated
 import tempfile
+import subprocess
 
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,12 +38,14 @@ corrector = m.Conv1DCorrector.load_from_checkpoint('models/corrector.ckpt')
 async def recognize_phonemes(file: Annotated[UploadFile, File(description="WAV audiofile to recognize", media_type="audio/wav")]):
     # if file.content_type not in ["audio/vnd.wave", 'audio/wav']:
     #     raise HTTPException(status.HTTP_400_BAD_REQUEST)
-    out_path = tempfile.mktemp('.wav')
+    out_path = tempfile.mktemp('.webm')
     with open(out_path, 'wb') as out_file:
         content = await file.read()
         out_file.write(content)
+    
+    subprocess.run(['ffmpeg', '-i', out_path, out_path+'.wav'])
 
-    wf, sr = librosa.load(out_path, sr=16000)
+    wf, sr = librosa.load(out_path+'.wav', sr=16000)
 
     tokens = processor(wf, sampling_rate=sr, return_tensors="pt").input_values
 
@@ -56,8 +59,8 @@ async def recognize_phonemes(file: Annotated[UploadFile, File(description="WAV a
         "result": " ".join(transcription)
     }
 
-@app.post('/recognize/phoneme_to_text')
+@app.post('/recognize/phoneme_to_text', response_model=RecognitionResultSchema)
 def recognize(data: PhonemeRecognitionRequest):
     phonemes, _ = m.vectorize_phonemes([data.phonemes])
-    result = corrector(phonemes)
-    return {'result': m.decode_str(result, False)}
+    result = corrector(phonemes)    
+    return {'result': m.decode_str(result, False)[0]}

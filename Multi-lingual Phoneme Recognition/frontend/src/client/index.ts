@@ -8,6 +8,7 @@ export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { Body_recognize_phonemes_recognize_phonemes_post } from './models/Body_recognize_phonemes_recognize_phonemes_post';
 export type { HTTPValidationError } from './models/HTTPValidationError';
+export type { PhonemeRecognitionRequest } from './models/PhonemeRecognitionRequest';
 export type { RecognitionResultSchema } from './models/RecognitionResultSchema';
 export type { ValidationError } from './models/ValidationError';
 
