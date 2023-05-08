@@ -8,7 +8,8 @@ import librosa
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 import torch
 
-from schemas import RecognitionResultSchema
+import model as m
+from schemas import RecognitionResultSchema, PhonemeRecognitionRequest
 
 app = FastAPI(root_path="http://localhost:8000")
 
@@ -29,6 +30,7 @@ app.add_middleware(
 
 processor = Wav2Vec2Processor.from_pretrained("/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/processor")
 model = Wav2Vec2ForCTC.from_pretrained("/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/phonemizer")
+corrector = m.Conv1DCorrector.load_from_checkpoint('models/corrector.ckpt')
 
 
 @app.post("/recognize/phonemes", response_model=RecognitionResultSchema)
@@ -53,3 +55,9 @@ async def recognize_phonemes(file: Annotated[UploadFile, File(description="WAV a
     return {
         "result": " ".join(transcription)
     }
+
+@app.post('/recognize/phoneme_to_text')
+def recognize(data: PhonemeRecognitionRequest):
+    phonemes, _ = m.vectorize_phonemes([data.phonemes])
+    result = corrector(phonemes)
+    return {'result': m.decode_str(result, False)}

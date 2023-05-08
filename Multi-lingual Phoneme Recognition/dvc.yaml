@@ -1,0 +1,8 @@
+stages:
+  mp3ToWAV:
+    cmd: python3 src/stages/mp32wav.py
+    params:
+    - mp3ToWAV
+    deps:
+    - src/stages/mp32wav.py
+    always_changed: true

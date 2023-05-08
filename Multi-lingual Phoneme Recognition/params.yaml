@@ -1,0 +1,3 @@
+mp3ToWAV:
+  raw_audio: "/home/boris/Yandex.Disk/UrFU/магистратура/диссертация/датасет 3"
+  processed_audio: "/home/boris/Yandex.Disk/UrFU/магистратура/диссертация/датасет 3/wavs"
