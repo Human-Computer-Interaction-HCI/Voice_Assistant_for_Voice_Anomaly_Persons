@@ -21,6 +21,24 @@ def recognize(file_path: list[str]) -> torch.Tensor:
 
     return logits
 
+def recognize_chunked(file_path: str, chunk_size=5) -> torch.Tensor:
+    target_sampling_rate = 16000
+    wf = []
+    duration = librosa.get_duration(path=file_path)
+    delta = 0
+    while delta < duration:
+        wf_, sr = librosa.load(file_path, sr=target_sampling_rate, offset=delta, duration=chunk_size)
+        # tokenize
+        input_values = processor(wf_, sampling_rate=sr, return_tensors="pt", padding=True).input_values
+
+        # retrieve logits
+        with torch.no_grad():
+            logits = model(input_values).logits
+
+        yield logits
+
+        delta += chunk_size
+
 def decode(X):
     return processor.batch_decode(X)
 
