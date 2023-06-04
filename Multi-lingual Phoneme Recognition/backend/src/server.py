@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 import tempfile
 import subprocess
@@ -10,9 +11,21 @@ from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 import torch
 
 import model as m
-from schemas import RecognitionResultSchema, PhonemeRecognitionRequest
+from schemas import (
+    FineTuningRequest,
+    RecognitionResultSchema,
+    PhonemeRecognitionRequest,
+)
+from services.hmmcorrector import HMMCorrector
 
-app = FastAPI(root_path="http://localhost:8000")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    hmm_corrector.save("corrector.json")
+
+
+app = FastAPI(root_path="http://localhost:8000", lifespan=lifespan)
 
 
 origins = [
@@ -28,39 +41,54 @@ app.add_middleware(
 )
 
 
+processor = Wav2Vec2Processor.from_pretrained(
+    "/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/processor"
+)
+model = Wav2Vec2ForCTC.from_pretrained(
+    "/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/phonemizer"
+)
+corrector = m.Conv1DCorrector.load_from_checkpoint("models/corrector.ckpt")
 
-processor = Wav2Vec2Processor.from_pretrained("/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/processor")
-model = Wav2Vec2ForCTC.from_pretrained("/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/phonemizer")
-corrector = m.Conv1DCorrector.load_from_checkpoint('models/corrector.ckpt')
+hmm_corrector = HMMCorrector("corrector.json")
 
 
 @app.post("/recognize/phonemes", response_model=RecognitionResultSchema)
-async def recognize_phonemes(file: Annotated[UploadFile, File(description="WAV audiofile to recognize", media_type="audio/wav")]):
+async def recognize_phonemes(
+    file: Annotated[
+        UploadFile,
+        File(description="WAV audiofile to recognize", media_type="audio/wav"),
+    ]
+):
     # if file.content_type not in ["audio/vnd.wave", 'audio/wav']:
     #     raise HTTPException(status.HTTP_400_BAD_REQUEST)
-    out_path = tempfile.mktemp('.webm')
-    with open(out_path, 'wb') as out_file:
+    out_path = tempfile.mktemp(".webm")
+    with open(out_path, "wb") as out_file:
         content = await file.read()
         out_file.write(content)
-    
-    subprocess.run(['ffmpeg', '-i', out_path, out_path+'.wav'])
 
-    wf, sr = librosa.load(out_path+'.wav', sr=16000)
+    subprocess.run(["ffmpeg", "-i", out_path, out_path + ".wav"])
+
+    wf, sr = librosa.load(out_path + ".wav", sr=16000)
 
     tokens = processor(wf, sampling_rate=sr, return_tensors="pt").input_values
 
     with torch.no_grad():
         logits = model(tokens).logits
-    
+
     prediction = torch.argmax(logits, -1)
     transcription = processor.batch_decode(prediction)
 
-    return {
-        "result": " ".join(transcription)
-    }
+    return {"result": " ".join(transcription)}
 
-@app.post('/recognize/phoneme_to_text', response_model=RecognitionResultSchema)
+
+@app.post("/recognize/phoneme_to_text", response_model=RecognitionResultSchema)
 def recognize(data: PhonemeRecognitionRequest):
-    phonemes, _ = m.vectorize_phonemes([data.phonemes])
-    result = corrector(phonemes)    
-    return {'result': m.decode_str(result, False)[0]}
+    phonemes = data.phonemes.split()
+    result = hmm_corrector.predict(phonemes)
+    return {"result": result}
+
+
+@app.post("/recognize/fine_tune")
+def fine_tune(data: FineTuningRequest):
+    hmm_corrector.study_pairs(data.phonemes.split(), data.text)
+    return {}

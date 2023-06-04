@@ -1,7 +1,8 @@
 'use client'
 
 import { DefaultService } from '@/client'
-import React, { useEffect, useRef, useState } from 'react'
+import TextFinetune from '@/components/text-finetune'
+import { useEffect, useRef, useState } from 'react'
 
 function RecordPage() {
   const [recordingInProgress, setRecordingInProgress] = useState(false)
@@ -36,16 +37,18 @@ function RecordPage() {
   function recognize() {
     DefaultService
       .recognizePhonemesRecognizePhonemesPost({ file: audioRecorded! })
-      .then(r => setRecognnizedPhonemes(r.result))
+      .then(r => {
+          DefaultService
+      .recognizeRecognizePhonemeToTextPost({ phonemes: recognizedPhonemes }).then(r => setRecognizedText(r.result))
+        setRecognnizedPhonemes(r.result)
+      })
   }
 
-  useEffect(() => {
-    if (recognizedPhonemes.length==0) return
-    DefaultService
-      .recognizeRecognizePhonemeToTextPost({ phonemes: recognizedPhonemes })
-      .then(r => setRecognizedText
-        (r.result))
-  }, [recognizedPhonemes])
+  // useEffect(() => {
+  //   if (recognizedPhonemes.length==0) return
+    
+  //     
+  // }, [recognizedPhonemes, setRecognnizedPhonemes])
 
   return (
     <div>
@@ -55,6 +58,7 @@ function RecordPage() {
       {audioRecorded && <button onClick={recognize}>Распознать</button>}
       <p>Распознанные фонемы: <i>{recognizedPhonemes}</i></p>
       <p>Распознанный текст: <i>{recognizedText}</i></p>
+      <TextFinetune phonemes={recognizedPhonemes}/>
     </div>
   )
 }

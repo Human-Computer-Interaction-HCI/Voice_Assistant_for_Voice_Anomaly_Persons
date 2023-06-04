@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Body_recognize_phonemes_recognize_phonemes_post } from '../models/Body_recognize_phonemes_recognize_phonemes_post';
+import type { FineTuningRequest } from '../models/FineTuningRequest';
 import type { PhonemeRecognitionRequest } from '../models/PhonemeRecognitionRequest';
 import type { RecognitionResultSchema } from '../models/RecognitionResultSchema';
 
@@ -43,6 +44,26 @@ export class DefaultService {
         return __request(OpenAPI, {
             method: 'POST',
             url: '/recognize/phoneme_to_text',
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Fine Tune
+     * @param requestBody
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public static fineTuneRecognizeFineTunePost(
+        requestBody: FineTuningRequest,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/recognize/fine_tune',
             body: requestBody,
             mediaType: 'application/json',
             errors: {

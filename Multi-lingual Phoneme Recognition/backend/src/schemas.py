@@ -5,3 +5,7 @@ class RecognitionResultSchema(BaseModel):
 
 class PhonemeRecognitionRequest(BaseModel):
     phonemes: str
+
+class FineTuningRequest(BaseModel):
+    text: str
+    phonemes: str
