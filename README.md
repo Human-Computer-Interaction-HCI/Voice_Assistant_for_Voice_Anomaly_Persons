@@ -1,4 +1,4 @@
-# Voice_Assistant_for_Voice_Anomaly_Persons
+# Russian voice assistant for people with voice disorders using natural language processing
 1. Multi-lingual Phoneme Recognition
 2. Abnormal Voice To Text
 3. Convert abnormal voice to normal voice
