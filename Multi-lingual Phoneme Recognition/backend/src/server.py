@@ -6,6 +6,7 @@ import subprocess
 from fastapi import FastAPI, File, HTTPException, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 
+from Levenshtein import ratio
 import librosa
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 import torch
@@ -51,6 +52,7 @@ corrector = m.Conv1DCorrector.load_from_checkpoint("models/corrector.ckpt")
 
 hmm_corrector = HMMCorrector("corrector.json")
 
+W=['он', 'когда', 'ночь', 'занемог', 'не', 'мог', 'его', 'скука', 'подносить', 'сидеть', 'шагу', 'не', 'возьмет', 'пример', 'думать', 'коварство', 'прочь', 'заставил', 'мой', 'лучше', 'подушки', 'себя', 'же', 'лекарство', 'боже', 'какое', 'другим', 'тебя', 'ему', 'выдумать', 'низкое', 'с', 'полуживого', 'уважать', 'отходя', 'больным', 'самых', 'поправлять', 'печально', 'правил', 'день', 'честных', 'и', 'в', 'но', 'и', 'шутку', 'дядя', 'черт', 'про', 'ни', 'наука', 'мой', 'забавлять', 'какая', 'вздыхать']
 
 @app.post("/recognize/phonemes", response_model=RecognitionResultSchema)
 async def recognize_phonemes(
@@ -85,7 +87,22 @@ async def recognize_phonemes(
 def recognize(data: PhonemeRecognitionRequest):
     phonemes = data.phonemes.split()
     result = hmm_corrector.predict(phonemes)
-    return {"result": result}
+    r=[]
+    # Ищем самое близкое слово
+    st=0
+    while st < len(result):
+        md=0
+        mw=''
+        for i in range(len(result),st,-1):
+            for w in W:
+                distance = ratio(w, result[st:i])
+                if distance>md:
+                    st1=i
+                    md=distance
+                    mw=w
+        st = st1
+        r.append(mw)
+    return {"result": f'{result}/{" ".join(r)}'}
 
 
 @app.post("/recognize/fine_tune")
