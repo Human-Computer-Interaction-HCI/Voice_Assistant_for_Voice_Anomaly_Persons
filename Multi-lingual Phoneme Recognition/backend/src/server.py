@@ -23,7 +23,7 @@ from services.hmmcorrector import HMMCorrector
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    hmm_corrector.save("corrector.json")
+    hmm_corrector.save("corrector.npy")
 
 
 app = FastAPI(root_path="http://localhost:8000", lifespan=lifespan)
@@ -48,9 +48,9 @@ processor = Wav2Vec2Processor.from_pretrained(
 model = Wav2Vec2ForCTC.from_pretrained(
     "/home/boris/Projects/Voice_Assistant_for_Voice_Anomaly_Persons/Multi-lingual Phoneme Recognition/models/phonemizer"
 )
-corrector = m.Conv1DCorrector.load_from_checkpoint("models/corrector.ckpt")
+# corrector = m.Conv1DCorrector.load_from_checkpoint("models/corrector.ckpt")
 
-hmm_corrector = HMMCorrector("corrector.json")
+hmm_corrector = HMMCorrector("models/vocab.json", "corrector.npy")
 
 W=['он', 'когда', 'ночь', 'занемог', 'не', 'мог', 'его', 'скука', 'подносить', 'сидеть', 'шагу', 'не', 'возьмет', 'пример', 'думать', 'коварство', 'прочь', 'заставил', 'мой', 'лучше', 'подушки', 'себя', 'же', 'лекарство', 'боже', 'какое', 'другим', 'тебя', 'ему', 'выдумать', 'низкое', 'с', 'полуживого', 'уважать', 'отходя', 'больным', 'самых', 'поправлять', 'печально', 'правил', 'день', 'честных', 'и', 'в', 'но', 'и', 'шутку', 'дядя', 'черт', 'про', 'ни', 'наука', 'мой', 'забавлять', 'какая', 'вздыхать']
 
@@ -86,23 +86,23 @@ async def recognize_phonemes(
 @app.post("/recognize/phoneme_to_text", response_model=RecognitionResultSchema)
 def recognize(data: PhonemeRecognitionRequest):
     phonemes = data.phonemes.split()
-    result = hmm_corrector.predict(phonemes)
-    r=[]
-    # Ищем самое близкое слово
-    st=0
-    while st < len(result):
-        md=0
-        mw=''
-        for i in range(len(result),st,-1):
-            for w in W:
-                distance = ratio(w, result[st:i])
-                if distance>md:
-                    st1=i
-                    md=distance
-                    mw=w
-        st = st1
-        r.append(mw)
-    return {"result": f'{result}/{" ".join(r)}'}
+    result, _ = hmm_corrector.predict(phonemes)
+    # r=[]
+    # # Ищем самое близкое слово
+    # st=0
+    # while st < len(result):
+    #     md=0
+    #     mw=''
+    #     for i in range(len(result),st,-1):
+    #         for w in W:
+    #             distance = ratio(w, result[st:i])
+    #             if distance>md:
+    #                 st1=i
+    #                 md=distance
+    #                 mw=w
+    #     st = st1
+    #     r.append(mw)
+    return {"result": f'{result}'}
 
 
 @app.post("/recognize/fine_tune")

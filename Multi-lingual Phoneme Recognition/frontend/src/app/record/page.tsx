@@ -1,13 +1,14 @@
 'use client'
 
-import { DefaultService } from '@/client'
+import { recognizePhonemes } from '@/api'
 import TextFinetune from '@/components/text-finetune'
+import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
 
 function RecordPage() {
   const [recordingInProgress, setRecordingInProgress] = useState(false)
   const [audioRecorded, setAudioRecorded] = useState<Blob>()
-  const [recognizedPhonemes, setRecognnizedPhonemes] = useState("")
+  const [recognizedPhonemes, setRecognizedPhonemes] = useState("")
   const [recognizedText, setRecognizedText] = useState("")
 
   const mediaRecorder = useRef<MediaRecorder>()
@@ -35,13 +36,11 @@ function RecordPage() {
     setRecordingInProgress(false)
   }
   function recognize() {
-    DefaultService
-      .recognizePhonemesRecognizePhonemesPost({ file: audioRecorded! })
-      .then(r => {
-          DefaultService
-      .recognizeRecognizePhonemeToTextPost({ phonemes: recognizedPhonemes }).then(r => setRecognizedText(r.result))
-        setRecognnizedPhonemes(r.result)
-      })
+    recognizePhonemes(audioRecorded!)
+    .then(r=>{
+      console.log(r)
+      setRecognizedPhonemes(r.result)
+    })
   }
 
   // useEffect(() => {
