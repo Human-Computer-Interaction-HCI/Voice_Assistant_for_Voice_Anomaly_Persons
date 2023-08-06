@@ -1,6 +1,6 @@
 'use client'
 
-import { recognizePhonemes } from '@/api'
+import { phonemesToText, recognizePhonemes } from '@/api'
 import TextFinetune from '@/components/text-finetune'
 import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
@@ -43,11 +43,13 @@ function RecordPage() {
     })
   }
 
-  // useEffect(() => {
-  //   if (recognizedPhonemes.length==0) return
-    
-  //     
-  // }, [recognizedPhonemes, setRecognnizedPhonemes])
+  useEffect(() => {
+    if (recognizedPhonemes.length==0) return
+    phonemesToText(recognizedPhonemes).then(r=>{
+      setRecognizedText(r.result)
+    })
+      
+  }, [recognizedPhonemes, setRecognizedPhonemes])
 
   return (
     <div>

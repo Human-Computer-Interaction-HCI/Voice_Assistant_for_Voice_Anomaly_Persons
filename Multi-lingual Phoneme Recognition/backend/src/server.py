@@ -83,7 +83,7 @@ async def recognize_phonemes(
     return {"result": " ".join(transcription)}
 
 
-@app.post("/recognize/phoneme_to_text", response_model=RecognitionResultSchema)
+@app.post("/recognize/phonemes_to_text", response_model=RecognitionResultSchema)
 def recognize(data: PhonemeRecognitionRequest):
     phonemes = data.phonemes.split()
     result, _ = hmm_corrector.predict(phonemes)

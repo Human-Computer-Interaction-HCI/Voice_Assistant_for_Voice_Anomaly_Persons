@@ -1,5 +1,6 @@
 'use client';
 
+import { fineTune } from "@/api";
 import { useState } from "react";
 
 export type FineTuneProps = {
@@ -8,7 +9,8 @@ export type FineTuneProps = {
 
 export default function TextFinetune({ phonemes }: FineTuneProps) {
     const [text, setText] = useState("")
-    function fineTune() {
+    function _fineTune() {
+        fineTune(text, phonemes)
         // DefaultService.fineTuneRecognizeFineTunePost({
         //     phonemes: phonemes,
         //     text: text
@@ -16,6 +18,6 @@ export default function TextFinetune({ phonemes }: FineTuneProps) {
     }
     return <>
         <p>Введите правильный текст: <input value={text} onChange={e => setText(e.target.value)} /></p>
-        <button onClick={fineTune}>Сохранить</button>
+        <button onClick={_fineTune}>Сохранить</button>
     </>;
 }
