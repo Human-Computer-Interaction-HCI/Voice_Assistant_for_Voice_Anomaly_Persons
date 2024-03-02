@@ -1,1 +1,8 @@
 venv
+Multi-lingual Phoneme Recognition/.dvc/tmp
+*.npy
+Multi-lingual Phoneme Recognition/data
+Multi-lingual Phoneme Recognition/notebooks/3sem/preds
+Multi-lingual Phoneme Recognition/notebooks/3sem/runs
+*.pyc
+Multi-lingual Phoneme Recognition/.dvc/cache/
