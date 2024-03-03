@@ -1,0 +1,6 @@
+{
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "python.testing.cwd": "${workspaceFolder}/Multi-lingual Phoneme Recognition/backend_for_prod",
+
+}
