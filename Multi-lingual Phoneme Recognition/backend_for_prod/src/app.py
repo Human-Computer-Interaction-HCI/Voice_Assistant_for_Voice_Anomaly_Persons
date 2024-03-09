@@ -6,10 +6,12 @@ from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 from ai_utils import Model, SpeechDataset
+from services.auth.routes import router as auth_router
 from schemas import LabelingRequestSchema, PredictionSchema
 from utils import clear_str, get_audio, to_str, webm_to_wav
 
 app = FastAPI()
+
 
 data_dir = os.path.join(os.path.dirname(__file__), 'data')
 if  not os.path.exists(data_dir):
@@ -58,3 +60,5 @@ async def label(data: LabelingRequestSchema):
 async def train():
     model.train_on_data(dataset, epochs=100)
     return {"status": "ok"}
+
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
