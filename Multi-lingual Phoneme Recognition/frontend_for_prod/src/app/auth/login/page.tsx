@@ -5,14 +5,16 @@ import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import { login } from "./actions";
 import Typography from "@mui/material/Typography";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
     const [message, setMessage] = useState<string | null>(null);
+    const router = useRouter();
     let form = useRef<HTMLFormElement>(null);
     async function loginClick() {
         let result = await login(new FormData(form.current!));
         if (result) {
-
+            router.push('/')
         } else {
             setMessage("Неверный логин или пароль");
         }
