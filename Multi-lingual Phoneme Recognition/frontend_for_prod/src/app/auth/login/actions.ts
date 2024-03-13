@@ -21,3 +21,7 @@ export async function login(fd: FormData): Promise<boolean> {
     }
     return false
 }
+
+export async function isAuthenticated(): Promise<boolean> {
+    return cookies().get('access_token')!== undefined
+}
