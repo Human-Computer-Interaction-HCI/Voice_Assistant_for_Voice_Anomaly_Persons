@@ -24,11 +24,11 @@ type MenuItemType = {
 };
 
 const pages: MenuItemType[] = [
-  { name: "Products", href: "/products" },
+  { name: "Записи", href: "/inner/recordings" },
   { name: "Модели", href: "/inner/model" },
 ];
 const settings: MenuItemType[] = [
-  { name: "Products", href: "/products" },
+  { name: "Записи", href: "/inner/recordings " },
   { name: "Модели", href: "/inner/model" },
 ];
 
@@ -43,8 +43,8 @@ function ResponsiveAppBar() {
   const [authStatus, setAuthStatus] = React.useState(false);
 
   React.useEffect(() => {
-    isAuthenticated().then(setAuthStatus)
-  })
+    isAuthenticated().then(setAuthStatus);
+  });
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
@@ -61,7 +61,7 @@ function ResponsiveAppBar() {
     setAnchorElUser(null);
   };
 
-  const userZone = authStatus?(
+  const userZone = authStatus ? (
     <Box sx={{ flexGrow: 0 }}>
       <Tooltip title="Open settings">
         <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
@@ -94,14 +94,23 @@ function ResponsiveAppBar() {
         ))}
       </Menu>
     </Box>
-  ):(<Box>
-    <Link href='/auth/login'><Button color="primary" variant="contained">Вход</Button></Link>
-    <Link href='/auth/register'><Button color="secondary" variant="contained">Регистрация</Button></Link>
-
-  </Box>)
+  ) : (
+    <Box>
+      <Link href="/auth/login">
+        <Button color="primary" variant="contained">
+          Вход
+        </Button>
+      </Link>
+      <Link href="/auth/register">
+        <Button color="secondary" variant="contained">
+          Регистрация
+        </Button>
+      </Link>
+    </Box>
+  );
 
   return (
-    <AppBar position="static" >
+    <AppBar position="static">
       <Container maxWidth="xl">
         <Toolbar disableGutters>
           <Typography
@@ -156,7 +165,11 @@ function ResponsiveAppBar() {
                   {page.onClick && (
                     <Button onClick={page.onClick}>{page.name}</Button>
                   )}
-                  {page.href && <Link href={page.href}>{page.name}</Link>}
+                  {page.href && (
+                    <Link href={page.href}>
+                      <Typography color="ButtonText">{page.name}</Typography>
+                    </Link>
+                  )}
                 </MenuItem>
               ))}
             </Menu>
