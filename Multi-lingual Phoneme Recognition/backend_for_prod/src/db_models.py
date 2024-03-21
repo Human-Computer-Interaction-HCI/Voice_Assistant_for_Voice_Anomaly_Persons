@@ -12,3 +12,12 @@ class User(Base):
 
     login: Mapped[str] = mapped_column(String, primary_key=True)
     password: Mapped[str] = mapped_column(String)
+
+
+class UserRecording(Base):
+    _tablename__ = "user_recording"
+
+    recording_id: Mapped[str] = mapped_column(String, primary_key=True)
+    user_id: Mapped[str]
+    # TODO: Дописать
+

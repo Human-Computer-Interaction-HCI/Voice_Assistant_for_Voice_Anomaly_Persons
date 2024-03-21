@@ -6,11 +6,13 @@ import IconButton from "@mui/material/IconButton";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import ReplayCircleIcon from "@mui/icons-material/ReplayCircleFilled";
 import Button from "@mui/material/Button";
+import { recognizeAction } from "./actions";
 
 enum RecordingState {
   NOT_RECORDED,
   RECORDING,
   RECORDED,
+  NEED_MARKUP
 }
 
 function getColor(state: RecordingState) {
@@ -20,6 +22,7 @@ function getColor(state: RecordingState) {
     case RecordingState.RECORDING:
       return "error";
     case RecordingState.RECORDED:
+    case RecordingState.NEED_MARKUP:
       return "success";
   }
 }
@@ -32,6 +35,10 @@ function Recorder() {
   const recorder = useRef<MediaRecorder>();
   const chunks = useRef<Blob[]>([]);
   const [recordingURL, setRecordingURL] = useState<string>();
+  const fileInput = useRef<HTMLFormElement>(null);
+  const [initialText, setInitialText] = useState<string>();
+  const [requestId, setRequestId] = useState<string>();
+  const correctedText = useRef<HTMLTextAreaElement>(null);
 
   async function record() {
     switch (recordingState) {
@@ -61,9 +68,27 @@ function Recorder() {
     }
   }
 
+  async function sendForRecognition(form: FormData){
+    let result = await recognizeAction(form)
+    setInitialText(result.result)
+    setRequestId(result.request_id)
+    setRecordingState(RecordingState.NEED_MARKUP)
+  }
+
   async function recognize() {
     let blob = new Blob(chunks.current);
-    // TODO: call server action
+    let fd = new FormData()
+    fd.append('file', blob, 'smth.webm');
+    await sendForRecognition(fd)
+  }
+
+  async function recognizeFile() {
+    let form = new FormData(fileInput.current!);
+    await sendForRecognition(form)
+  }
+
+  async function saveText() {
+    // TODO
   }
 
   return (
@@ -76,6 +101,19 @@ function Recorder() {
         <audio src={recordingURL} controls />
         <Button variant="contained" onClick={recognize}>Распознать</Button>
       </> : null}
+      <Typography>или</Typography>
+      <form ref={fileInput}>
+        <input type="file" accept="audio/*" name="file" />
+      </form>
+      {!initialText&&<Button variant="contained" onClick={recognizeFile}>Распознать</Button>}
+      {initialText&&<>
+        <Typography>Распознанный текст:</Typography>
+        <Typography><em>{initialText}</em></Typography>
+        <Typography>Корректный текст</Typography>
+        <textarea placeholder="Введите текст" cols={60} rows={3} ref={correctedText}/>
+        <br/>
+        <Button variant="contained" onClick={saveText}>Сохранить</Button>
+      </>}
     </div>
   );
 }

@@ -12,7 +12,7 @@
       "args": ["app:app", "--reload"],
       "jinja": true,
       "cwd": "${workspaceFolder}/Multi-lingual Phoneme Recognition/backend_for_prod/src",
-      "python": "${workspaceFolder}/Multi-lingual Phoneme Recognition/backend_for_prod/venv/bin/python",
+      // "python": "${workspaceFolder}/Multi-lingual Phoneme Recognition/backend_for_prod/venv/bin/python",
       "envFile": "${workspaceFolder}/Multi-lingual Phoneme Recognition/backend_for_prod/.env"
     }
   ]
