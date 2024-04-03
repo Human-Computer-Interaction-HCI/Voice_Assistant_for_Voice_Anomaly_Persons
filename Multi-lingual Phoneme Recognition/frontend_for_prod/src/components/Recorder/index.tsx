@@ -6,7 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import StopCircleIcon from "@mui/icons-material/StopCircle";
 import ReplayCircleIcon from "@mui/icons-material/ReplayCircleFilled";
 import Button from "@mui/material/Button";
-import { recognizeAction } from "./actions";
+import { recognizeAction, sendCorrectedText } from "./actions";
 
 enum RecordingState {
   NOT_RECORDED,
@@ -88,7 +88,7 @@ function Recorder() {
   }
 
   async function saveText() {
-    // TODO
+    await sendCorrectedText(correctedText.current!.value, requestId)
   }
 
   return (

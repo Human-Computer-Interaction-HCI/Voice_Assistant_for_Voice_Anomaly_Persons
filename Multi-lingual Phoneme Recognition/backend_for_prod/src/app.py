@@ -4,8 +4,10 @@ from typing import Annotated
 
 from fastapi import Depends, FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
 
 from ai_utils.dependencies import get_model, get_dataset, Model, SpeechDataset
+from database import get_db
 from services.auth.routes import router as auth_router
 from schemas import LabelingRequestSchema, PredictionSchema
 from utils import clear_str, get_audio, to_str, webm_to_wav
@@ -30,7 +32,9 @@ app.add_middleware(
 
 @app.post("/predict", response_model=PredictionSchema)
 async def predict(
-    file: Annotated[UploadFile, File(...)], model: Annotated[Model, Depends(get_model)]
+    file: Annotated[UploadFile, File(...)],
+    model: Annotated[Model, Depends(get_model)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     request_id = secrets.token_urlsafe(8)
     out_path = f"{data_dir}/{request_id}.webm"
