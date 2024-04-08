@@ -88,7 +88,7 @@ function Recorder() {
   }
 
   async function saveText() {
-    await sendCorrectedText(correctedText.current!.value, requestId)
+    await sendCorrectedText(requestId!, correctedText.current!.value)
   }
 
   return (

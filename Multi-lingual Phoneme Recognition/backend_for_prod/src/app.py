@@ -8,7 +8,10 @@ from sqlalchemy.orm import Session
 
 from ai_utils.dependencies import get_model, get_dataset, Model, SpeechDataset
 from database import get_db
+from db_models import User, UserDataset, UserRecording
 from services.auth.routes import router as auth_router
+from services.auth.utils import get_current_user
+from services.dataset_management.routes import router as dataset_management_router
 from schemas import LabelingRequestSchema, PredictionSchema
 from utils import clear_str, get_audio, to_str, webm_to_wav
 
@@ -35,6 +38,7 @@ async def predict(
     file: Annotated[UploadFile, File(...)],
     model: Annotated[Model, Depends(get_model)],
     db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)]
 ):
     request_id = secrets.token_urlsafe(8)
     out_path = f"{data_dir}/{request_id}.webm"
@@ -49,14 +53,26 @@ async def predict(
 
     result = model.predict(audio).argmax(-1)[0]
 
+    default_ds = db.query(UserDataset).filter(UserDataset.label=="default", UserDataset.user_id==user.login).first()
+
+    recording = UserRecording()
+    recording.recording_id = request_id
+    recording.dataset_id = default_ds.dataset_id
+    
+    db.add(recording)
+    db.commit()
+
     return {"result": to_str(result), "request_id": request_id}
 
 
 @app.post("/label")
 async def label(
-    data: LabelingRequestSchema, dataset: Annotated[SpeechDataset, Depends(get_dataset)]
+    data: LabelingRequestSchema,
+    db: Annotated[Session, Depends(get_db)],
 ):
-    dataset.add_audio(f"{data_dir}/{data.request_id}.webm.wav", clear_str(data.label))
+    recording = db.query(UserRecording).filter(UserRecording.recording_id == data.request_id).first()
+    recording.label = data.label
+    db.commit()
     return {"status": "ok"}
 
 
@@ -70,3 +86,4 @@ async def train(
 
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(dataset_management_router, prefix="/datasets", tags=["ds"])

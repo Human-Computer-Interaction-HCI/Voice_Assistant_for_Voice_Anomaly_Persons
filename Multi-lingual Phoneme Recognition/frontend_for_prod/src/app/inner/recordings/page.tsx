@@ -5,18 +5,34 @@ import Button from "@mui/material/Button";
 import CloseIcon from "@mui/icons-material/Close";
 import Modal from "@mui/material/Modal";
 import Typography from "@mui/material/Typography";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import IconButton from "@mui/material/IconButton";
 import Recorder from "@/components/Recorder";
+import { DatasetList } from "@/api/datasets";
+import { getDatasets } from "./actions";
+import Stack from "@mui/material/Stack";
+import Chip from "@mui/material/Chip";
 
 export default function Page() {
   const [recordingModalOpened, setRecordingModalOpened] = useState(false);
+  const [datasets, setDatasets] = useState<DatasetList>()
+
   function addRecord() {
     setRecordingModalOpened(true);
   }
   function closeModal() {
     setRecordingModalOpened(false);
   }
+
+  useEffect(()=>{
+    getDatasets().then(setDatasets)
+  }, [])
+
+  const DSLIST = <Stack direction='row'>
+    {datasets?.datasets.map(ds=>
+      <Chip key={ds.label} label={ds.label} variant="filled" color="success"/>
+    )}
+  </Stack>
 
   return (
     <>
@@ -48,6 +64,7 @@ export default function Page() {
           <Recorder />
         </Box>
       </Modal>
+      {DSLIST}
     </>
   );
 }
