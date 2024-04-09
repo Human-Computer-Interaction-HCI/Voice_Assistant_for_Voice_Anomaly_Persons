@@ -27,7 +27,7 @@ def list_recordings(label: str,
     db: Annotated[Session, Depends(get_db)],
 ):
     dataset = db.query(UserDataset).filter(UserDataset.user_id == user.login).filter(UserDataset.label == label).first()
-    recordings = db.query(UserRecording).filter(UserRecording.dataset_id == dataset.id).all()
+    recordings = db.query(UserRecording).filter(UserRecording.dataset_id == dataset.dataset_id).all()
 
     return {
         'recordings': recordings

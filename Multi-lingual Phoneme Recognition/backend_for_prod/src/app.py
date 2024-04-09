@@ -41,7 +41,7 @@ async def predict(
     user: Annotated[User, Depends(get_current_user)]
 ):
     request_id = secrets.token_urlsafe(8)
-    out_path = f"{data_dir}/{request_id}.webm"
+    out_path = f"{data_dir}/{request_id}.m4a"# revert to.wav
     with open(out_path, "wb") as f:
         f.write(await file.read())
 
