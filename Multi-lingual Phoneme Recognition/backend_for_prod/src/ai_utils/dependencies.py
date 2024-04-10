@@ -4,7 +4,6 @@ from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.orm import Session
 
-from ai_utils.dataset import SpeechDataset
 from ai_utils.model import Model
 from database import get_db
 from db_models import User, UserDataset, UserModel

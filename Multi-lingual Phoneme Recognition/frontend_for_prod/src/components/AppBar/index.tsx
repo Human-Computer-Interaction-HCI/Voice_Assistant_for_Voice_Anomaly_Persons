@@ -44,7 +44,7 @@ function ResponsiveAppBar() {
 
   React.useEffect(() => {
     isAuthenticated().then(setAuthStatus);
-  });
+  }, []);
 
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
