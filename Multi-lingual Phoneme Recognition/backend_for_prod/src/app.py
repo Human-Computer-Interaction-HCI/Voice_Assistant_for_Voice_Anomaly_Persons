@@ -42,7 +42,7 @@ async def predict(
     user: Annotated[User, Depends(get_current_user)],
 ):
     request_id = secrets.token_urlsafe(8)
-    out_path = f"{data_dir}/{request_id}.m4a"  # revert to.wav
+    out_path = f"{data_dir}/{request_id}.webm"
     with open(out_path, "wb") as f:
         f.write(await file.read())
 
@@ -66,6 +66,18 @@ async def predict(
 
     db.add(recording)
     db.commit()
+
+    return {"result": to_str(result), "request_id": request_id}
+
+@app.get("/predict", response_model=PredictionSchema)
+async def predict(
+    request_id: str,
+    model: Annotated[Model, Depends(get_model)],
+):
+    out_path = f"{data_dir}/{request_id}.webm"  # revert to.wav
+    audio = get_audio(out_path + ".wav")
+
+    result = model.predict(audio).argmax(-1)[0]
 
     return {"result": to_str(result), "request_id": request_id}
 

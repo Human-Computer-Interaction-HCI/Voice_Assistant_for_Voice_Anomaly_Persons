@@ -117,6 +117,8 @@ class Model(nn.Module):
 
         while True:
             epoch += 1
+            last_losses.append(0)
+            print(f"Epoch: {epoch}/{epochs}")
             if epochs is not None and epoch > epochs:
                 break
 
@@ -128,8 +130,7 @@ class Model(nn.Module):
                 )
                 loss.backward()
 
-                last_losses.append(loss.item())
-
+                last_losses.append(last_losses[-1]+loss.item())
                 if bn % batches_per_step == 0:
                     optimizer.step()
                     optimizer.zero_grad()
@@ -140,6 +141,8 @@ class Model(nn.Module):
                 < loss_delta
             ):
                 break
+            
+            print(last_losses[-1])
 
     def save(self, path: PathLike):
         torch.save(self.state_dict(), path)
