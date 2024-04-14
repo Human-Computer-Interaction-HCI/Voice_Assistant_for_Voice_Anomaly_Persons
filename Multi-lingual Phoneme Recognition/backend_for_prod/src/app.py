@@ -2,7 +2,7 @@ import os
 import secrets
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, File, UploadFile
+from fastapi import Depends, FastAPI, File, Response, UploadFile, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
@@ -69,13 +69,19 @@ async def predict(
 
     return {"result": to_str(result), "request_id": request_id}
 
+
 @app.get("/predict", response_model=PredictionSchema)
 async def predict(
     request_id: str,
     model: Annotated[Model, Depends(get_model)],
+    response: Response
 ):
     out_path = f"{data_dir}/{request_id}.webm"  # revert to.wav
-    audio = get_audio(out_path + ".wav")
+    try:
+        audio = get_audio(out_path + ".wav")
+    except FileNotFoundError:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"result": "File not found", "request_id": request_id}
 
     result = model.predict(audio).argmax(-1)[0]
 

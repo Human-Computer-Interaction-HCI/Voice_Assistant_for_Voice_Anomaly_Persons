@@ -1,12 +1,8 @@
 "use server"
 
 import { axiosInstance } from "@/api"
+import { RecognitionResult } from "../../api/types"
 
-
-export type RecognitionResult = {
-    result: string,
-    request_id: string
-}
 
 export async function recognizeAction(fd: FormData): Promise<RecognitionResult> {
     let resp = await axiosInstance.post("predict", fd)

@@ -5,10 +5,24 @@ import TableCell from "@mui/material/TableCell";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import { createColumnHelper, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { getLabel } from "./actions";
+import { useEffect, useState } from "react";
+import Button from "@mui/material-next/Button";
 
 export type RecordingsTableProps = {
     recordings: DatasetRecording[];
 
+}
+
+function LabelCell({ recordingId }: { recordingId: string }) {
+    "use client"
+    const [label, setLabel] = useState<string>()
+    function setLbl() {
+        getLabel(recordingId).then(setLabel)
+    
+    }
+    // useEffect(() => {getLabel(recordingId).then(r=>setLabel(r||""))}, [recordingId])
+    return <p>{label||<Button onClick={setLbl}>Рапознать</Button>}</p>
 }
 
 export default function RecordingsTable({ recordings }: RecordingsTableProps) {
@@ -20,6 +34,14 @@ export default function RecordingsTable({ recordings }: RecordingsTableProps) {
         }),
         columnHelper.accessor("recording_id", {
             header: "Запись"
+        }),
+        columnHelper.display({
+            id: 'recognizedText',
+            cell: row => {
+                const recordingId = row.row.getValue('recording_id') as string
+                return <LabelCell recordingId={recordingId} />
+            },
+            header: "Распознанная запись"
         })
     ]
 

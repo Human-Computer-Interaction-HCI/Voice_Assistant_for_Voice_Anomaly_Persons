@@ -1,6 +1,6 @@
 "use client"
 import Typography from "@mui/material/Typography";
-import {getModelInfo} from "./actions"
+import { getModelInfo, trainModel } from "./actions"
 import { useEffect, useState } from "react";
 import { ModelInfo } from "@/api/model";
 import Card from "@mui/material/Card";
@@ -18,13 +18,13 @@ export default function Page() {
 
     return <>
         <Typography variant="h1">Моя модель</Typography>
-        <Card sx={{width: "fit-content", maxWidth: "300px"}}>
-            <CardHeader title={`Модель ${modelInfo?.id}`}/>
+        <Card sx={{ width: "fit-content", maxWidth: "300px" }}>
+            <CardHeader title={`Модель ${modelInfo?.id}`} />
             <CardContent>
                 <Typography>Метрики</Typography>
             </CardContent>
             <CardActions>
-                <Button size="small">Запустить обучение</Button>
+                <Button size="small" onClick={()=>trainModel().then(()=>alert("do0ne"))}>Запустить обучение</Button>
             </CardActions>
         </Card>
     </>

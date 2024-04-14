@@ -28,6 +28,7 @@ async def train(
     model: Annotated[Model, Depends(get_model)],
     user_dataset: Annotated[UserDataset, Depends(get_dataset)],
 ):
+    print('Start train')
     dataset = SpeechDataset()
     for i in user_dataset.recordings:
         if i.label:
