@@ -12,7 +12,7 @@ def webm_to_wav(path: str, out_path: str):
     subprocess.run(["ffmpeg", "-i", path, out_path])
 
 
-abc = "?абвгдеёжзийклмнопрстуфхшщчцьыъэюя"
+abc = "?абвгдеёжзийклмнопрстуфхшщчцьыъэюя "
 
 def clear_str(s):
     return "".join(i for i in s.lower() if i in abc)
@@ -32,3 +32,6 @@ def str_to_tensor(strs: list[str]) -> tuple[torch.Tensor, torch.Tensor]:
 
 def to_str(r):
     return ''.join(abc[j] for j in r)
+
+def get_y_lengths(y):
+    return torch.ones(y.shape[0], dtype=int)*y.shape[-2]
