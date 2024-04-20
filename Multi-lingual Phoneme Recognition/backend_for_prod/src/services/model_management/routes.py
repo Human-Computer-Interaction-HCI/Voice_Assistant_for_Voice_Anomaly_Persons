@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from ai_utils.dataset import SpeechDataset
 from ai_utils.dependencies import get_model, get_dataset, Model
+from ai_utils.metric_store import MetricStore
 from database import get_db
 from db_models import User, UserDataset, UserModel
 from services.auth.utils import get_current_user
@@ -33,10 +34,12 @@ async def train(
     for i in user_dataset.recordings:
         if i.label:
             dataset.add_audio(recording_id_to_path(i.recording_id), i.label)
-    model.train_on_data(dataset, epochs=100)
+    
+    metric_store = MetricStore(["loss", "cer", "epoch", "batch"])
+    model.train_on_data(dataset, epochs=100, callback=metric_store.callback)
     # todo: refactor model saving
     model.save(f'data/models/{db.query(UserModel).filter(UserModel.user_id == user.login).first().model_id}')
-    return {"status": "ok"}
+    return {"status": "ok", "history": metric_store.history}
 
 #######################
 

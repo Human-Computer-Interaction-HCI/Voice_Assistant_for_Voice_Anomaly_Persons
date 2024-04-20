@@ -1,14 +1,15 @@
 from collections import deque
 from os import PathLike
-from typing import Self
+from typing import Callable, NoReturn, Self
 
+from jiwer import cer
 from torch import nn
 from torch.utils.data import DataLoader
 import torch
 import torchaudio
 
 from .dataset import SpeechDataset, padded_stack
-from utils import get_y_lengths, str_to_tensor
+from utils import get_y_lengths, str_to_tensor, to_str
 
 train_transforms = torchaudio.transforms.MelSpectrogram(n_mels=128)
 
@@ -96,10 +97,13 @@ class Model(nn.Module):
         cer_delta: float | None = 0.01,
         batches_per_step: int = 1,
         plateu_length: int = 5,
+        callback: Callable[[str, float | str], NoReturn] | None = None,
     ):
         """
         cer_delta: пока игнорируется
         """
+        if callback is None:
+            callback = print
 
         dataloader = DataLoader(
             dataset, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
@@ -119,16 +123,23 @@ class Model(nn.Module):
             epoch += 1
             last_losses.append(0)
             print(f"Epoch: {epoch}/{epochs}")
+            callback("epoch", epoch)
             if epochs is not None and epoch > epochs:
                 break
 
             for bn, batch in enumerate(dataloader):
+                print(f"Batch: {bn}/{len(dataloader)}")
+                callback("batch", f"{bn}/{len(dataloader)}")
                 output = self.predict(batch[0])
                 target_t, target_len = str_to_tensor(batch[1])
                 loss = loss_function(
                     output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
                 )
                 loss.backward()
+                callback("loss", f'{epoch}:{bn}:{loss.item():.4f}')
+                callback("cer", cer(to_str(output.argmax(-1)), to_str(batch[1])))
+
+                # print(to_str(output.argmax(-1)), to_str(batch[1]))
 
                 last_losses.append(last_losses[-1]+loss.item())
                 if bn % batches_per_step == 0:
@@ -142,7 +153,7 @@ class Model(nn.Module):
             ):
                 break
             
-            print(last_losses[-1])
+        
 
     def save(self, path: PathLike):
         torch.save(self.state_dict(), path)
