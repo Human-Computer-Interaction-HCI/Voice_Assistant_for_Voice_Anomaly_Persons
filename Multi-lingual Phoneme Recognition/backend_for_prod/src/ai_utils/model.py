@@ -136,7 +136,7 @@ class Model(nn.Module):
                     output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
                 )
                 loss.backward()
-                callback("loss", f"{epoch}:{bn}:{loss.item():.4f}")
+                callback("loss", f"{loss.item():.4f}")
                 callback("cer", cer(to_str(output.argmax(-1)), to_str(batch[1])))
 
                 # print(to_str(output.argmax(-1)), to_str(batch[1]))

@@ -11,6 +11,7 @@ import { Button } from "@mui/material";
 
 export default function Page() {
     const [modelInfo, setModelInfo] = useState<ModelInfo>()
+    const [taskId, setTaskId] = useState<string>()
 
     useEffect(() => {
         getModelInfo().then(setModelInfo)
@@ -22,9 +23,10 @@ export default function Page() {
             <CardHeader title={`Модель ${modelInfo?.id}`} />
             <CardContent>
                 <Typography>Метрики</Typography>
+                {taskId&&<p><b>TODO:</b> График {taskId}</p>}
             </CardContent>
             <CardActions>
-                <Button size="small" onClick={()=>trainModel().then(()=>alert("do0ne"))}>Запустить обучение</Button>
+                <Button size="small" onClick={()=>trainModel().then(r=>setTaskId(r.task_id))}>Запустить обучение</Button>
             </CardActions>
         </Card>
     </>
