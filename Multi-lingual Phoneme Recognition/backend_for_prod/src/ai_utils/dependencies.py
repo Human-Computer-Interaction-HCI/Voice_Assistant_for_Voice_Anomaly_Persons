@@ -19,6 +19,16 @@ def get_model(user: Annotated[User, Depends(get_current_user)], db: Annotated[Se
         Model().save(f'data/models/{model_obj.model_id}')
     return Model.load(f'data/models/{model_obj.model_id}')
 
+def get_model_id(user: Annotated[User, Depends(get_current_user)], db: Annotated[Session, Depends(get_db)]) -> int | None:
+    model_obj = db.query(UserModel).filter(UserModel.user_id == user.login).first()
+    if model_obj is None:
+        return None
+    
+    if not os.path.exists(f'data/models/{model_obj.model_id}'):
+        Model().save(f'data/models/{model_obj.model_id}')
+    return model_obj.model_id
+
+
 def get_dataset(user: Annotated[User, Depends(get_current_user)], db: Annotated[Session, Depends(get_db)]) -> UserDataset | None:
     return db.query(UserDataset).filter(UserDataset.user_id == user.login).first()
 

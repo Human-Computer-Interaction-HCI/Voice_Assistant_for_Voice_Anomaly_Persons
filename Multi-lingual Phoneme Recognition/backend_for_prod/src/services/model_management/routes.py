@@ -1,14 +1,16 @@
+from secrets import token_urlsafe
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
 from ai_utils.dataset import SpeechDataset
-from ai_utils.dependencies import get_model, get_dataset, Model
+from ai_utils.dependencies import get_model, get_dataset, Model, get_model_id
 from ai_utils.metric_store import MetricStore
 from database import get_db
 from db_models import User, UserDataset, UserModel
 from services.auth.utils import get_current_user
+from celery_app import train_model
 
 router = APIRouter()
 
@@ -23,23 +25,27 @@ def model_id(
 
 
 @router.post("/train")
-async def train(
-    user: Annotated[User, Depends(get_current_user)],
-    db: Annotated[Session, Depends(get_db)],
-    model: Annotated[Model, Depends(get_model)],
+def train(
+    model_id: Annotated[int, Depends(get_model_id)],
     user_dataset: Annotated[UserDataset, Depends(get_dataset)],
+    background_tasks: BackgroundTasks,
 ):
     print('Start train')
-    dataset = SpeechDataset()
+    dataset = []
     for i in user_dataset.recordings:
         if i.label:
-            dataset.add_audio(recording_id_to_path(i.recording_id), i.label)
+            dataset.append((recording_id_to_path(i.recording_id), i.label))
     
-    metric_store = MetricStore(["loss", "cer", "epoch", "batch"])
-    model.train_on_data(dataset, epochs=100, callback=metric_store.callback)
-    # todo: refactor model saving
-    model.save(f'data/models/{db.query(UserModel).filter(UserModel.user_id == user.login).first().model_id}')
-    return {"status": "ok", "history": metric_store.history}
+    task_id = token_urlsafe(8)
+    
+    # train_model.delay(model_id, dataset, task_id)/
+    background_tasks.add_task(train_model, model_id, dataset, task_id)
+
+    return {"task_id": task_id}
+
+@router.get('/metrics')
+def get_metrics(task_id: str):
+    return MetricStore([], task_id).get_metrics()
 
 #######################
 

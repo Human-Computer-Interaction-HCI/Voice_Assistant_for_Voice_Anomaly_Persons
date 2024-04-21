@@ -122,13 +122,13 @@ class Model(nn.Module):
         while True:
             epoch += 1
             last_losses.append(0)
-            print(f"Epoch: {epoch}/{epochs}")
-            callback("epoch", epoch)
+            
             if epochs is not None and epoch > epochs:
                 break
 
             for bn, batch in enumerate(dataloader):
                 print(f"Batch: {bn}/{len(dataloader)}")
+                callback("epoch", epoch)
                 callback("batch", f"{bn}/{len(dataloader)}")
                 output = self.predict(batch[0])
                 target_t, target_len = str_to_tensor(batch[1])
@@ -136,12 +136,12 @@ class Model(nn.Module):
                     output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
                 )
                 loss.backward()
-                callback("loss", f'{epoch}:{bn}:{loss.item():.4f}')
+                callback("loss", f"{epoch}:{bn}:{loss.item():.4f}")
                 callback("cer", cer(to_str(output.argmax(-1)), to_str(batch[1])))
 
                 # print(to_str(output.argmax(-1)), to_str(batch[1]))
 
-                last_losses.append(last_losses[-1]+loss.item())
+                last_losses.append(last_losses[-1] + loss.item())
                 if bn % batches_per_step == 0:
                     optimizer.step()
                     optimizer.zero_grad()
@@ -152,8 +152,6 @@ class Model(nn.Module):
                 < loss_delta
             ):
                 break
-            
-        
 
     def save(self, path: PathLike):
         torch.save(self.state_dict(), path)
