@@ -69,6 +69,27 @@ async def predict(
 
     return {"result": to_str(result), "request_id": request_id}
 
+@app.post("/predict_no_save", response_model=PredictionSchema)
+async def predict_no_save(
+    file: Annotated[UploadFile, File(...)],
+    model: Annotated[Model, Depends(get_model)]
+):
+    request_id = secrets.token_urlsafe(8)
+    out_path = f"{data_dir}/{request_id}.webm"
+    with open(out_path, "wb") as f:
+        f.write(await file.read())
+
+    webm_to_wav(out_path, out_path + ".wav")
+
+    os.remove(out_path)
+
+    audio = get_audio(out_path + ".wav")
+
+    result = model.predict(audio).argmax(-1)[0]
+    os.remove(out_path+".wav")
+
+    return {"result": to_str(result), "request_id": request_id}
+
 
 @app.get("/predict", response_model=PredictionSchema)
 async def predict(

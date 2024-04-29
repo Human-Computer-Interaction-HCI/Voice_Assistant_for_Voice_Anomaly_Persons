@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import torch
 import torchaudio
 
+from .augmentation import augment_audio
 from .dataset import SpeechDataset, padded_stack
 from utils import get_y_lengths, str_to_tensor, to_str
 
@@ -104,6 +105,7 @@ class Model(nn.Module):
         batches_per_step: int = 1,
         plateu_length: int = 5,
         callback: Callable[[str, float | str], NoReturn] | None = None,
+        augment=True,
     ):
         """
         cer_delta: пока игнорируется
@@ -112,6 +114,8 @@ class Model(nn.Module):
             callback = print
 
         train_ds, val_ds = dataset.split()
+        if augment:
+            train_ds.augment = augment_audio
         train_dataloader = DataLoader(
             train_ds, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
         )

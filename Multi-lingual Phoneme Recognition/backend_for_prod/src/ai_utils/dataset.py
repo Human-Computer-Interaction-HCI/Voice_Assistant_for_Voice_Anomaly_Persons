@@ -11,9 +11,13 @@ class SpeechDataset(Dataset):
     Позволяет добавлять аудио с разметкой в существующий объект.
     """
 
-    def __init__(self):
+    def __init__(self, augment=None):
         self.audio_list = []
         self.label_list = []
+        if augment:
+            self.augment = augment
+        else:
+            self.augment = lambda x, y: x
 
     def add_audio(self, audio, label):
         self.audio_list.append(audio)
@@ -23,7 +27,7 @@ class SpeechDataset(Dataset):
         return len(self.audio_list)
 
     def __getitem__(self, idx):
-        return get_audio(self.audio_list[idx]), self.label_list[idx]
+        return self.augment(get_audio(self.audio_list[idx]), idx), self.label_list[idx]
     def _getitem(self, idx):
         return self.audio_list[idx], self.label_list[idx]
     
