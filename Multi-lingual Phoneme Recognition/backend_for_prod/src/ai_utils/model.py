@@ -2,7 +2,7 @@ from collections import deque
 from os import PathLike
 from typing import Callable, NoReturn, Self
 
-from jiwer import cer
+from jiwer import cer as jiwer_cer
 from torch import nn
 from torch.utils.data import DataLoader
 import torch
@@ -10,6 +10,12 @@ import torchaudio
 
 from .dataset import SpeechDataset, padded_stack
 from utils import get_y_lengths, str_to_tensor, to_str
+
+def cer(a, b):
+    try:
+        return jiwer_cer(a, b)
+    except:
+        return 1
 
 train_transforms = torchaudio.transforms.MelSpectrogram(n_mels=128)
 
@@ -105,8 +111,12 @@ class Model(nn.Module):
         if callback is None:
             callback = print
 
-        dataloader = DataLoader(
-            dataset, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
+        train_ds, val_ds = dataset.split()
+        train_dataloader = DataLoader(
+            train_ds, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
+        )
+        val_dataloader = DataLoader(
+            val_ds, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
         )
         last_losses = deque(maxlen=plateu_length)
 
@@ -122,29 +132,45 @@ class Model(nn.Module):
         while True:
             epoch += 1
             last_losses.append(0)
-            
+
             if epochs is not None and epoch > epochs:
                 break
 
-            for bn, batch in enumerate(dataloader):
-                print(f"Batch: {bn}/{len(dataloader)}")
-                callback("epoch", epoch)
-                callback("batch", f"{bn}/{len(dataloader)}")
+            callback("epoch", epoch)
+            bnum, bl, bc = 0, 0, 0
+            for bn, batch in enumerate(train_dataloader):
+                bnum += 1
+                print(f"Batch: {bn}/{len(train_dataloader)}")
+
                 output = self.predict(batch[0])
                 target_t, target_len = str_to_tensor(batch[1])
                 loss = loss_function(
                     output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
                 )
                 loss.backward()
-                callback("loss", f"{loss.item():.4f}")
-                callback("cer", cer(to_str(output.argmax(-1)), to_str(batch[1])))
-
-                # print(to_str(output.argmax(-1)), to_str(batch[1]))
+                bl += loss.item()
+                bc += cer(to_str(output.argmax(-1)), to_str(batch[1]))
 
                 last_losses.append(last_losses[-1] + loss.item())
                 if bn % batches_per_step == 0:
                     optimizer.step()
                     optimizer.zero_grad()
+
+            callback("train_loss", bl/bnum)
+            callback("train_cer", bc/bnum)
+
+            bnum, bl, bc = 0, 0, 0
+            for bn, batch in enumerate(val_dataloader):
+                bnum += 1
+                output = self.predict(batch[0])
+                target_t, target_len = str_to_tensor(batch[1])
+                loss = loss_function(
+                    output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
+                )
+                bl += loss.item()
+                bc += cer(to_str(output.argmax(-1)), to_str(batch[1]))
+            callback("val_loss", bl/bnum)
+            callback("val_cer", bc/bnum)
 
             if (
                 len(last_losses) == plateu_length

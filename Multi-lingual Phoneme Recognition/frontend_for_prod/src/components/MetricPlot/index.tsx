@@ -18,34 +18,53 @@ export default function MetricPlot(
                 setMetrics(r)
             })
         }, 1000)
-        return () => {clearInterval(intervalId)}
+        return () => { clearInterval(intervalId) }
     }, [refresh, taskId])
     let batches = getBatches(metrics)
-    return <><Plot
-    data={[
-        {
-            x: batches,
-            y: getLosses(metrics, 0),
-            type: 'scatter',
-            mode: 'lines+markers',
-            marker: { color: 'red' },
-            name: 'loss'
-        },
-    ]}
-    layout={{title: "Функция потерь" }}
-/><Plot
-        data={[
-            {
-                x: batches,
-                y: getLosses(metrics, 1),
-                type: 'scatter',
-                mode: 'lines+markers',
-                marker: { color: 'red' },
-                name: 'CER'
-            },
-        ]}
-        layout={{title: "Растояние Левенштейна" }}
-    /></>
+    return <>
+        <Plot
+            data={[
+                {
+                    x: batches,
+                    y: getLosses(metrics, 1),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { color: 'red' },
+                    name: 'train_loss'
+                },
+                {
+                    x: batches,
+                    y: getLosses(metrics, 2),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { color: 'green' },
+                    name: 'test_loss'
+                },
+            ]}
+            layout={{ title: "Функция потерь" }}
+        />
+        <Plot
+            data={[
+                {
+                    x: batches,
+                    y: getLosses(metrics, 3),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { color: 'red' },
+                    name: 'train cer'
+                },
+                {
+                    x: batches,
+                    y: getLosses(metrics, 4),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    marker: { color: 'green' },
+                    name: 'test cer'
+                },
+            ]}
+            layout={{ title: "Растояние Левенштейна" }}
+        />
+    </>
 }
 
 function getBatches(metrics: string[][]) {
@@ -62,16 +81,16 @@ function getLosses(metrics: string[][], idx: number, smooth: boolean = true) {
     let k = 0
     let acc = 0
     for (let i = 0; i < metrics.length; i++) {
-        if (metrics[i][2]!= epoch){
+        if (metrics[i][2] != epoch) {
             epoch = metrics[i][2]
             losses.push(parseFloat(metrics[i][idx]))
-            losses[losses.length - 1] = acc/k
+            losses[losses.length - 1] = acc / k
             k = 0
             acc = 0
         }
         k++
         acc += parseFloat(metrics[i][idx])
-        losses[losses.length - 1] = acc/k
+        losses[losses.length - 1] = acc / k
     }
     return losses
 }

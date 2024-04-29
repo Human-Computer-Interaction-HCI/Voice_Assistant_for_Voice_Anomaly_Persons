@@ -4,7 +4,7 @@ from ai_utils.model import Model
 
 
 def train_model(model_id: int, dataset_list: list[tuple[str, str]], task_id: str):
-    metric_store = MetricStore(["loss", "cer", "epoch", "batch"], task_id)
+    metric_store = MetricStore(["epoch", "train_loss", "train_cer", "val_loss", "val_cer"], task_id)
     model = Model.load(f'data/models/{model_id}')
 
     dataset = SpeechDataset()

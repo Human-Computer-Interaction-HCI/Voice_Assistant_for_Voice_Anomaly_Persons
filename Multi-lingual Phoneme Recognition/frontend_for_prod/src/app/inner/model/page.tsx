@@ -12,7 +12,7 @@ import MetricPlot from "@/components/MetricPlot";
 
 export default function Page() {
     const [modelInfo, setModelInfo] = useState<ModelInfo>()
-    const [taskId, setTaskId] = useState<string>("RKRO5Noz9cM")
+    const [taskId, setTaskId] = useState<string>()
     const [training, setTraining] = useState(false)
 
     useEffect(() => {
