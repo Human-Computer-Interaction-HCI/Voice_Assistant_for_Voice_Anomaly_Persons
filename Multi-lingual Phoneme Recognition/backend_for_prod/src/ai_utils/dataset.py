@@ -1,3 +1,4 @@
+from sklearn.model_selection import train_test_split
 import torch
 from torch.utils.data import Dataset
 
@@ -23,6 +24,8 @@ class SpeechDataset(Dataset):
 
     def __getitem__(self, idx):
         return get_audio(self.audio_list[idx]), self.label_list[idx]
+    def _getitem(self, idx):
+        return self.audio_list[idx], self.label_list[idx]
     
     @staticmethod
     def collate(batch):
@@ -31,6 +34,18 @@ class SpeechDataset(Dataset):
             wfs.append(audio)
             lbls.append(label)
         return wfs, lbls
+    
+    def split(self) -> tuple['SpeechDataset', 'SpeechDataset']:
+        train, test = train_test_split(list(range(len(self))))
+        train_ds = SpeechDataset()
+        test_ds = SpeechDataset()
+
+        for i in train:
+            train_ds.add_audio(*self._getitem(i))
+        for i in test:
+            test_ds.add_audio(*self._getitem(i))
+        
+        return train_ds, test_ds
 
 def padded_stack(list_of_tensors, maxlen=16):
     maxlen = max(x.shape[1] for x in list_of_tensors)
