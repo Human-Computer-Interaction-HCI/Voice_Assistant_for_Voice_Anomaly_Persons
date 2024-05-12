@@ -81,7 +81,7 @@ function getLosses(metrics: string[][], idx: number, smooth: boolean = true) {
     let k = 0
     let acc = 0
     for (let i = 0; i < metrics.length; i++) {
-        if (metrics[i][2] != epoch) {
+        if (true || metrics[i][2] != epoch) {
             epoch = metrics[i][2]
             losses.push(parseFloat(metrics[i][idx]))
             losses[losses.length - 1] = acc / k

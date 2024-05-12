@@ -24,9 +24,10 @@ export async function login(fd: FormData): Promise<boolean> {
     return false
 }
 
-export async function isAuthenticated(): Promise<boolean> {
+export async function isAuthenticated(checkToken_ = true): Promise<boolean> {
     const token = cookies().get('access_token')
     if (!token) return false
     axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token.value}`
+    if (!checkToken_) return true
     return await checkToken()
 }

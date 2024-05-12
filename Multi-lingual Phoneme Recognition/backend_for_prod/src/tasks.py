@@ -11,5 +11,5 @@ def train_model(model_id: int, dataset_list: list[tuple[str, str]], task_id: str
     for i, j in dataset_list:
         dataset.add_audio(i, j)
 
-    model.train_on_data(dataset, epochs=100, callback=metric_store.callback)
+    model.train_on_data(dataset, epochs=100, callback=metric_store.callback, plateu_length=None)
     

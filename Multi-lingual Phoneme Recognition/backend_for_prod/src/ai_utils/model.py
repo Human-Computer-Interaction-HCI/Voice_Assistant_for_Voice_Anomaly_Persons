@@ -12,11 +12,13 @@ from .augmentation import augment_audio
 from .dataset import SpeechDataset, padded_stack
 from utils import get_y_lengths, str_to_tensor, to_str
 
+
 def cer(a, b):
     try:
         return jiwer_cer(a, b)
     except:
         return 1
+
 
 train_transforms = torchaudio.transforms.MelSpectrogram(n_mels=128)
 
@@ -68,12 +70,16 @@ class Model(nn.Module):
         self.rnn = nn.GRU(
             input_size=64,
             hidden_size=32,
-            num_layers=1,
+            num_layers=2,
             batch_first=True,
             bidirectional=True,
         )
 
-        self.fc = nn.Linear(64, 35)
+        self.fc = nn.Sequential(
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 35),
+        )
         self.act = nn.LogSoftmax(-1)
 
     def forward(self, X):
@@ -106,6 +112,7 @@ class Model(nn.Module):
         plateu_length: int = 5,
         callback: Callable[[str, float | str], NoReturn] | None = None,
         augment=True,
+        batch_size=4
     ):
         """
         cer_delta: пока игнорируется
@@ -117,17 +124,17 @@ class Model(nn.Module):
         if augment:
             train_ds.augment = augment_audio
         train_dataloader = DataLoader(
-            train_ds, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
+            train_ds, batch_size=batch_size, shuffle=True, collate_fn=SpeechDataset.collate
         )
         val_dataloader = DataLoader(
-            val_ds, batch_size=4, shuffle=True, collate_fn=SpeechDataset.collate
+            val_ds, batch_size=batch_size, shuffle=True, collate_fn=SpeechDataset.collate
         )
         last_losses = deque(maxlen=plateu_length)
 
         self.train()
 
         loss_function = nn.CTCLoss(zero_infinity=True)
-        optimizer = torch.optim.Adam(self.parameters(), lr=0.001)
+        optimizer = torch.optim.Adam(self.parameters(), lr=0.001,  weight_decay=0.0001)
 
         optimizer.zero_grad()
 
@@ -140,10 +147,11 @@ class Model(nn.Module):
             if epochs is not None and epoch > epochs:
                 break
 
+            self.train()
             callback("epoch", epoch)
             bnum, bl, bc = 0, 0, 0
             for bn, batch in enumerate(train_dataloader):
-                bnum += 1
+                bnum += batch_size
                 print(f"Batch: {bn}/{len(train_dataloader)}")
 
                 output = self.predict(batch[0])
@@ -155,17 +163,17 @@ class Model(nn.Module):
                 bl += loss.item()
                 bc += cer(to_str(output.argmax(-1)), to_str(batch[1]))
 
-                last_losses.append(last_losses[-1] + loss.item())
                 if bn % batches_per_step == 0:
                     optimizer.step()
                     optimizer.zero_grad()
 
-            callback("train_loss", bl/bnum)
-            callback("train_cer", bc/bnum)
+            callback("train_loss", bl / bnum)
+            callback("train_cer", bc / bnum)
 
+            self.eval()
             bnum, bl, bc = 0, 0, 0
             for bn, batch in enumerate(val_dataloader):
-                bnum += 1
+                bnum += batch_size
                 output = self.predict(batch[0])
                 target_t, target_len = str_to_tensor(batch[1])
                 loss = loss_function(
@@ -173,8 +181,9 @@ class Model(nn.Module):
                 )
                 bl += loss.item()
                 bc += cer(to_str(output.argmax(-1)), to_str(batch[1]))
-            callback("val_loss", bl/bnum)
-            callback("val_cer", bc/bnum)
+            callback("val_loss", bl / bnum)
+            callback("val_cer", bc / bnum)
+            last_losses.append(bl / bnum)
 
             if (
                 len(last_losses) == plateu_length
@@ -182,6 +191,33 @@ class Model(nn.Module):
                 < loss_delta
             ):
                 break
+
+    def get_metrics(
+        self,
+        dataset: SpeechDataset,
+        batch_size=4
+    ):
+        """
+        cer_delta: пока игнорируется
+        """
+        dataloader = DataLoader(
+            dataset, batch_size=batch_size, shuffle=True, collate_fn=SpeechDataset.collate
+        )
+
+        loss_function = nn.CTCLoss(zero_infinity=True)
+        
+        self.eval()
+        bnum, bl, bc = 0, 0, 0
+        for bn, batch in enumerate(dataloader):
+            bnum += batch_size
+            output = self.predict(batch[0])
+            target_t, target_len = str_to_tensor(batch[1])
+            loss = loss_function(
+                output.permute(1, 0, 2), target_t, get_y_lengths(output), target_len
+            )
+            bl += loss.item()
+            bc += cer(to_str(output.argmax(-1)), to_str(batch[1]))
+        return {"loss": bl / bnum, "cer": bc / bnum}
 
     def save(self, path: PathLike):
         torch.save(self.state_dict(), path)

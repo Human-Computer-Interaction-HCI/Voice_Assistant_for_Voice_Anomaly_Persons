@@ -29,6 +29,7 @@ def augment_audio(audio: torch.Tensor, idx):
     if len(cache) > 2000:
         del cache[random.choice(list(cache.keys()))]
     efn = random.choices([0, 1, 2],[0.5, 0.3, 0.2])[0]
+    print("augmentation: ", efn)
     if (idx, efn) in cache:
         cache[(idx, efn)] = (cache[(idx, efn)][0], cache[(idx, efn)][1]+1)
         return cache[(idx, efn)][0]
@@ -37,10 +38,12 @@ def augment_audio(audio: torch.Tensor, idx):
         case 0:
             cache[(idx, efn)] = (audio, 0)
         case 1:
-            audio += torch.rand(audio.shape) * 0.1
+            audio += torch.rand(audio.shape) * random.random()
             cache[(idx, efn)] =  (audio, 0)
         case 2:
-            cache[(idx, efn)] =  (apply_effect(audio.T, 16000, random.choice(effects)).T, 0)
+            eff = random.choice(effects)
+            print('effect: ', eff)
+            cache[(idx, efn)] =  (apply_effect(audio.T, 16000, eff).T, 0)
         case 3:
             cache[(idx, efn)] =  (torchaudio.functional.pitch_shift(
                 audio, 16000, random.randint(-3, 3)
